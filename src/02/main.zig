@@ -9,7 +9,7 @@ const ArrayList = std.ArrayList;
 pub fn main() !void {
     const allocator = std.heap.page_allocator;
 
-    const list = try common.read_file_array_of_array(i64, allocator, "src/02/input.txt", " ");
+    const list = try common.read_2d_i64_array(i64, allocator, "src/02/input.txt", " ");
 
     defer common.cleanup_array([]i64, allocator, list);
 
@@ -83,7 +83,7 @@ pub fn solve_part_2(list: [][]i64) !i64 {
 
 test "solve" {
     const allocator = testing.allocator;
-    const list = try common.read_file_array_of_array(i64, allocator, "src/02/test_input.txt", " ");
+    const list = try common.read_2d_i64_array(i64, allocator, "src/02/test_input.txt", " ");
 
     defer common.cleanup_array([]i64, allocator, list);
 

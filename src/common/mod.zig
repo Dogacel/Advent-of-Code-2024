@@ -3,7 +3,15 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 const ArrayList = std.ArrayList;
 
-pub fn read_file_array_of_array(T: type, allocator: Allocator, path: []const u8, delimeter: []const u8) ![][]T {
+pub fn read_2d_i64_array(T: type, allocator: Allocator, path: []const u8, delimeter: []const u8) ![][]T {
+    return read_2d_array(T, allocator, path, delimeter, parse_i64);
+}
+
+pub fn read_2d_str_array(T: type, allocator: Allocator, path: []const u8, delimeter: []const u8) ![][]T {
+    return read_2d_array(T, allocator, path, delimeter, parse_str);
+}
+
+pub fn read_2d_array(T: type, allocator: Allocator, path: []const u8, delimeter: []const u8, parser: fn (in: []const u8) T) ![][]T {
     // Open the file
     const fs = std.fs.cwd();
     const file = try fs.openFile(path, .{ .mode = .read_only });
@@ -37,7 +45,7 @@ pub fn read_file_array_of_array(T: type, allocator: Allocator, path: []const u8,
         var inner_list = ArrayList(T).init(allocator);
 
         while (parts_iter.next()) |part| {
-            const value = std.fmt.parseInt(T, part, 10) catch continue;
+            const value = parser(part);
             try inner_list.append(value);
         }
 
@@ -54,6 +62,44 @@ pub fn read_file_array_of_array(T: type, allocator: Allocator, path: []const u8,
     }
 
     return return_list;
+}
+
+pub fn read_1d_array(T: type, allocator: Allocator, path: []const u8, parser: fn (in: []const u8) T) ![]T {
+    // Open the file
+    const fs = std.fs.cwd();
+    const file = try fs.openFile(path, .{ .mode = .read_only });
+    defer file.close();
+
+    // Read the entire file content into a buffer
+    var content = try file.readToEndAlloc(allocator, std.math.maxInt(usize));
+    defer allocator.free(content);
+
+    // Convert content to a slice of u8
+    const content_str = content[0 .. content.len - 1];
+
+    // Split the content into lines
+    var lines_iter = std.mem.split(
+        u8,
+        content_str,
+        "\n",
+    );
+
+    var list = ArrayList(T).init(allocator);
+    defer list.deinit();
+
+    while (lines_iter.next()) |line| {
+        try list.append(parser(line));
+    }
+
+    return try list.toOwnedSlice();
+}
+
+pub fn parse_i64(in: []const u8) i64 {
+    return std.fmt.parseInt(i64, in, 10) catch -1;
+}
+
+pub fn parse_str(in: []const u8) []const u8 {
+    return in;
 }
 
 pub fn cleanup_array(T: type, allocator: Allocator, array: []T) void {

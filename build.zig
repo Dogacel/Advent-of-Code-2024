@@ -14,7 +14,7 @@ pub fn build(b: *std.Build) !void {
         .{ .iterate = true },
     )).iterate();
 
-    const all_tests = b.step("all_tests", "Run all tests");
+    const all_tests = b.step("test", "Run all tests");
 
     while (try it.next()) |entry| {
         if (entry.kind == .directory and entry.name[0] != '.') {
@@ -56,6 +56,8 @@ pub fn build(b: *std.Build) !void {
                 .target = target,
                 .optimize = optimize,
             });
+
+            exe_unit_tests.root_module.addImport("common", common_mod);
 
             const run_exe_unit_tests = b.addRunArtifact(exe_unit_tests);
 
