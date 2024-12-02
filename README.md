@@ -1,6 +1,6 @@
 # Advent of Code 2024
 
-This repository contains my solutions for the Advent of Code 2024 challenge. I am going to use Zig to solve the problems.
+This repository contains my solutions for the Advent of Code 2024 challenge using **Zig** programming language.
 
 ## Running
 
