@@ -6,6 +6,22 @@ pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
+    var common_iter = (try std.fs.cwd().openDir(
+        "./src/common",
+        .{ .iterate = true },
+    )).iterate();
+
+    var common_modules = std.ArrayList(struct { mod: *std.Build.Module, name: []const u8 }).init(allocator);
+    defer common_modules.deinit();
+
+    while (try common_iter.next()) |entry| {
+        if (entry.kind == .file and std.mem.endsWith(u8, entry.name, ".zig")) {
+            const file_path = try std.fs.path.join(allocator, &.{ "src/common", entry.name });
+            const mod = b.createModule(.{ .root_source_file = b.path(file_path) });
+            try common_modules.append(.{ .mod = mod, .name = entry.name[0 .. entry.name.len - 4] });
+        }
+    }
+
     var it = (try std.fs.cwd().openDir(
         "./src",
         .{ .iterate = true },
@@ -21,12 +37,19 @@ pub fn build(b: *std.Build) !void {
             // Construct the path to the `main.zig` file in the subfolder
             const source_file = try std.fs.path.join(allocator, &.{ subfolder_path, "main.zig" });
 
+            // If main.zig doesn't exist, skip
+            _ = std.fs.cwd().openFile(source_file, .{}) catch continue;
+
             const exe = b.addExecutable(.{
                 .name = entry.name,
                 .root_source_file = b.path(source_file),
                 .target = target,
                 .optimize = optimize,
             });
+
+            for (common_modules.items) |common_mod| {
+                exe.root_module.addImport(common_mod.name, common_mod.mod);
+            }
 
             b.installArtifact(exe);
 

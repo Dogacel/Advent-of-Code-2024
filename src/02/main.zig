@@ -1,4 +1,6 @@
 const std = @import("std");
+const file_reader = @import("file_reader");
+
 const testing = std.testing;
 const math = std.math;
 const Allocator = std.mem.Allocator;
@@ -7,7 +9,7 @@ const ArrayList = std.ArrayList;
 pub fn main() !void {
     const allocator = std.heap.page_allocator;
 
-    const list = try read_file(allocator, "src/02/input.txt");
+    const list = try file_reader.read_file_array_of_array(i64, allocator, "src/02/input.txt", " ");
 
     defer cleanup_array([]i64, allocator, list);
 
@@ -16,59 +18,6 @@ pub fn main() !void {
 
     const result_part_2 = try solve_part_2(list);
     std.debug.print("Part 2: {}\n", .{result_part_2});
-}
-
-pub fn read_file(allocator: Allocator, path: []const u8) ![][]i64 {
-    // Open the file
-    const fs = std.fs.cwd();
-    const file = try fs.openFile(path, .{ .mode = .read_only });
-    defer file.close();
-
-    // Read the entire file content into a buffer
-    var content = try file.readToEndAlloc(allocator, std.math.maxInt(usize));
-    defer allocator.free(content);
-
-    // Convert content to a slice of u8
-    const content_str = content[0 .. content.len - 1];
-
-    // Split the content into lines
-    var lines_iter = std.mem.split(
-        u8,
-        content_str,
-        "\n",
-    );
-
-    var list = ArrayList(ArrayList(i64)).init(allocator);
-    defer list.deinit();
-    defer for (list.items) |inner_list| inner_list.deinit();
-
-    while (lines_iter.next()) |line| {
-        // Trim the line to remove any extra whitespace
-        const trimmed_line = std.mem.trim(u8, line, " \t\r");
-
-        // Split the line by space
-        var parts_iter = std.mem.split(u8, trimmed_line, " ");
-
-        var inner_list = ArrayList(i64).init(allocator);
-
-        while (parts_iter.next()) |part| {
-            const value = std.fmt.parseInt(i64, part, 10) catch continue;
-            try inner_list.append(value);
-        }
-
-        try list.append(inner_list);
-    }
-
-    const return_list = try allocator.alloc([]i64, list.items.len);
-
-    for (0..list.items.len) |i| {
-        const inner_list = list.items[i];
-        var return_inner_list = try allocator.alloc(i64, inner_list.items.len);
-        @memcpy(return_inner_list[0..], inner_list.items[0..]);
-        return_list[i] = return_inner_list;
-    }
-
-    return return_list;
 }
 
 pub fn solve_part_1(list: [][]i64) !i64 {
@@ -134,7 +83,7 @@ pub fn solve_part_2(list: [][]i64) !i64 {
 
 test "solve" {
     const allocator = testing.allocator;
-    const list = try read_file(allocator, "src/02/test_input.txt");
+    const list = try file_reader.read_file_array_of_array(i64, allocator, "src/02/test_input.txt", " ");
 
     defer cleanup_array([]i64, allocator, list);
 
