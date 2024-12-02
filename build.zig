@@ -6,21 +6,8 @@ pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    var common_iter = (try std.fs.cwd().openDir(
-        "./src/common",
-        .{ .iterate = true },
-    )).iterate();
-
-    var common_modules = std.ArrayList(struct { mod: *std.Build.Module, name: []const u8 }).init(allocator);
-    defer common_modules.deinit();
-
-    while (try common_iter.next()) |entry| {
-        if (entry.kind == .file and std.mem.endsWith(u8, entry.name, ".zig")) {
-            const file_path = try std.fs.path.join(allocator, &.{ "src/common", entry.name });
-            const mod = b.createModule(.{ .root_source_file = b.path(file_path) });
-            try common_modules.append(.{ .mod = mod, .name = entry.name[0 .. entry.name.len - 4] });
-        }
-    }
+    // Not removing for future reference.
+    const common_mod = b.createModule(.{ .root_source_file = b.path("src/common/mod.zig") });
 
     var it = (try std.fs.cwd().openDir(
         "./src",
@@ -47,9 +34,7 @@ pub fn build(b: *std.Build) !void {
                 .optimize = optimize,
             });
 
-            for (common_modules.items) |common_mod| {
-                exe.root_module.addImport(common_mod.name, common_mod.mod);
-            }
+            exe.root_module.addImport("common", common_mod);
 
             b.installArtifact(exe);
 

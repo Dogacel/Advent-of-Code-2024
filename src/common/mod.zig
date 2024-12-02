@@ -55,3 +55,10 @@ pub fn read_file_array_of_array(T: type, allocator: Allocator, path: []const u8,
 
     return return_list;
 }
+
+pub fn cleanup_array(T: type, allocator: Allocator, array: []T) void {
+    for (array) |item| {
+        allocator.free(item);
+    }
+    allocator.free(array);
+}
