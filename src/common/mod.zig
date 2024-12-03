@@ -11,6 +11,14 @@ pub fn read_2d_str_array(T: type, allocator: Allocator, path: []const u8, delime
     return read_2d_array(T, allocator, path, delimeter, parse_str);
 }
 
+pub fn read_str(allocator: Allocator, path: []const u8) ![]u8 {
+    const fs = std.fs.cwd();
+    const file = try fs.openFile(path, .{ .mode = .read_only });
+    defer file.close();
+
+    return try file.readToEndAlloc(allocator, std.math.maxInt(usize));
+}
+
 pub fn read_2d_array(T: type, allocator: Allocator, path: []const u8, delimeter: []const u8, parser: fn (in: []const u8) T) ![][]T {
     // Open the file
     const fs = std.fs.cwd();
