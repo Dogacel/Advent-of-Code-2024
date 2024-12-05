@@ -19,6 +19,38 @@ pub fn read_str(allocator: Allocator, path: []const u8) ![]u8 {
     return try file.readToEndAlloc(allocator, std.math.maxInt(usize));
 }
 
+pub fn input_iter(allocator: Allocator) !std.mem.SplitIterator(u8, .sequence) {
+    var args = std.process.args();
+    defer args.deinit();
+
+    _ = args.skip();
+
+    const input_file = args.next() orelse "";
+
+    const path = try std.fmt.allocPrint(allocator, "src/{s}.txt", .{input_file});
+    defer allocator.free(path);
+
+    // Open the file
+    const fs = std.fs.cwd();
+    const file = try fs.openFile(path, .{ .mode = .read_only });
+    defer file.close();
+
+    // Read the entire file content into a buffer
+    var content = try file.readToEndAlloc(allocator, std.math.maxInt(usize));
+
+    // Convert content to a slice of u8
+    const content_str = content[0 .. content.len - 1];
+
+    // Split the content into lines
+    const lines_iter = std.mem.splitSequence(
+        u8,
+        content_str,
+        "\n",
+    );
+
+    return lines_iter;
+}
+
 pub fn read_2d_array(T: type, allocator: Allocator, path: []const u8, delimeter: []const u8, parser: fn (in: []const u8) T) ![][]T {
     // Open the file
     const fs = std.fs.cwd();
