@@ -20,5 +20,7 @@ pub fn main() !void {
             line,
             " ,;|",
         );
+
+        items_iter = items_iter;
     }
 }
