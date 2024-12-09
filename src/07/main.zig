@@ -69,10 +69,8 @@ pub fn main() !void {
                     sum *= items.items[j];
                 } else {
                     const padding = digits(items.items[j]);
-                    defer allocator.free(padding);
-                    // std.debug.print("{d} Padding: {d}\n", .{ items.items[j], padding.len });
 
-                    sum *= std.math.pow(u64, 10, padding.len);
+                    sum *= std.math.pow(u64, 10, padding);
                     sum += items.items[j];
                 }
 
@@ -116,5 +114,5 @@ pub fn digits(value: u64) u64 {
         }
     }
 
-    return -1;
+    return 0;
 }
